@@ -21,8 +21,7 @@ impl Board {
         player: &Player,
         position: Position,
     ) -> Result<GameState, GameError> {
-        let square = self.get_position(&position);
-        match square {
+        match self.get_position(&position) {
             Some(filled) => {
                 Result::Err(GameError {
                     message: String::from(format!("Player {} has already played in this square. Please select a different square.", filled)),

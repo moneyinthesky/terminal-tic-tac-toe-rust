@@ -25,18 +25,6 @@ impl Display for Player {
     }
 }
 
-// impl FromStr for Player {
-//     type Err = String;
-
-//     fn from_str(s: &str) -> Result<Self, Self::Err> {
-//         match s.trim() {
-//             "X" | "x" => Ok(Player::X),
-//             "O" | "o" => Ok(Player::O),
-//             _ => Err(String::from(format!("Invalid input: {}", s))),
-//         }
-//     }
-// }
-
 #[cfg(test)]
 mod tests {
     use super::*;
