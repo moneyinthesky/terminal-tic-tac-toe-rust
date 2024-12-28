@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use console::style;
+
 #[derive(PartialEq, Debug, Clone)]
 pub enum Player {
     X,
@@ -12,6 +14,13 @@ impl Player {
             Player::X
         } else {
             Player::O
+        }
+    }
+
+    pub fn styled(&self) -> console::StyledObject<String> {
+        match self {
+            Player::X => style(format!("{self}")).bold().green(),
+            Player::O => style(format!("{self}")).bold().red(),
         }
     }
 }

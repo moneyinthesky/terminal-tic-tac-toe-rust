@@ -1,5 +1,6 @@
-use std::io::{stdin, stdout, Write};
+use std::io::{stdin, stdout, Error, Write};
 
+use console::{style, Term};
 use domain::{board::Board, player::Player, position::Position, GameState};
 
 mod domain;
@@ -14,8 +15,8 @@ fn prompt_for_input(prompt: String) -> String {
 }
 
 fn get_next_move(player: &Player) -> Position {
-    match prompt_for_input(String::from(format!("\n{player} to play: "))).parse::<Position>() {
-        Ok(m) => m,
+    match prompt_for_input(String::from(format!("\n{} to play: ", player.styled()))).parse::<Position>() {
+        Ok(position) => position,
         Err(err) => {
             println!("{err}");
             get_next_move(player)
@@ -23,31 +24,44 @@ fn get_next_move(player: &Player) -> Position {
     }
 }
 
-fn main() {
+fn main() -> Result<(), Error> {
+    let term = Term::stdout();
+
     let mut board = Board::new();
-    println!("Terminal tic-tac-toe!");
+
+    println!("{}", style("Terminal tic-tac-toe!").bold().cyan());
+    println!("{}", style("Select square in format \"ROW,COL\"").dim().italic());
     println!("{}", board);
 
+    let mut lines_to_clear = 9;
     let mut move_number = 1;
     loop {
         let current_player = Player::from_move(move_number);
         let next_move = get_next_move(&current_player);
         match board.play_move(&current_player, next_move) {
             Ok(GameState::Winner(winner)) => {
+                term.clear_last_lines(lines_to_clear)?;
                 println!("{board}");
-                println!("Congratulations! Player {winner} won!");
+                println!("Congratulations! Player {} won!", winner.styled());
                 break;
             }
             Ok(GameState::NoWinner) => {
+                term.clear_last_lines(lines_to_clear)?;
                 println!("{board}");
-                println!("It's a draw!");
+                println!("{}", style("It's a draw!").yellow().bold());
                 break;
             }
             Ok(GameState::InProgress) => {
+                move_number = move_number + 1;
+                term.clear_last_lines(lines_to_clear)?;
+                lines_to_clear = 9;
                 println!("{board}");
             }
-            Err(err) => println!("{}", err.message),
+            Err(err) => {
+                lines_to_clear = lines_to_clear + 3;
+                println!("{}", err.message);
+            }
         }
-        move_number = move_number + 1;
     }
+    Result::Ok(())
 }
