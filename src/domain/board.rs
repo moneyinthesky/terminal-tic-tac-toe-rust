@@ -24,7 +24,7 @@ impl Board {
         match self.get_position(&position) {
             Some(filled) => {
                 Result::Err(GameError {
-                    message: String::from(format!("Player {} has already played in this square. Please select a different square.", filled)),
+                    message: format!("Player {} has already played in this square. Please select a different square.", filled),
                 })
             },
             None => {
@@ -135,10 +135,10 @@ mod tests {
         assert_eq!(
             result,
             Result::Err(GameError {
-                message: String::from(format!(
+                message: format!(
                 "Player {} has already played in this square. Please select a different square.",
                 Player::O
-            ))
+            )
             })
         );
     }

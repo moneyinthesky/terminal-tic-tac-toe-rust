@@ -15,7 +15,7 @@ fn prompt_for_input(prompt: String) -> String {
 }
 
 fn get_next_move(player: &Player) -> Position {
-    match prompt_for_input(String::from(format!("\n{} to play: ", player.styled()))).parse::<Position>() {
+    match prompt_for_input(format!("\n{} to play: ", player.styled())).parse::<Position>() {
         Ok(position) => position,
         Err(err) => {
             println!("{err}");
@@ -52,13 +52,13 @@ fn main() -> Result<(), Error> {
                 break;
             }
             Ok(GameState::InProgress) => {
-                move_number = move_number + 1;
+                move_number += 1;
                 term.clear_last_lines(lines_to_clear)?;
                 lines_to_clear = 9;
                 println!("{board}");
             }
             Err(err) => {
-                lines_to_clear = lines_to_clear + 3;
+                lines_to_clear += 3;
                 println!("{}", err.message);
             }
         }
