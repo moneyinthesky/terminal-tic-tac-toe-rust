@@ -47,8 +47,8 @@ impl Board {
             || self.check_diagonals(player)
     }
 
-    fn get_position(&self, position: &Position) -> &Option<Player> {
-        &self.squares[(position.row as usize) - 1][(position.col as usize) - 1]
+    fn get_position(&self, position: &Position) -> Option<&Player> {
+        self.squares[(position.row as usize) - 1][(position.col as usize) - 1].as_ref()
     }
 
     fn set_position(&mut self, position: &Position, player: &Player) {
