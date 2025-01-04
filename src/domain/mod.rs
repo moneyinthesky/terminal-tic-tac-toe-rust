@@ -3,6 +3,7 @@ use player::Player;
 pub mod board;
 pub mod position;
 pub mod player;
+pub mod square;
 
 #[derive(PartialEq, Debug)]
 pub struct GameError { pub message: String }

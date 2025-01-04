@@ -1,17 +1,17 @@
 use std::fmt::Display;
 
-use super::{player::Player, position::Position, GameError, GameState};
+use super::{player::Player, position::Position, square::Square, GameError, GameState};
 
 #[derive(PartialEq, Debug)]
 pub struct Board {
-    pub squares: Vec<Vec<Option<Player>>>,
+    pub squares: Vec<Vec<Square>>,
 }
 
 impl Board {
     pub fn new() -> Self {
         Board {
             squares: (0..3)
-                .map(|_| (0..3).map(|_| Option::None).collect())
+                .map(|_| (0..3).map(|_| Square::default()).collect())
                 .collect(),
         }
     }
@@ -22,12 +22,7 @@ impl Board {
         position: Position,
     ) -> Result<GameState, GameError> {
         match self.get_position(&position) {
-            Some(filled) => {
-                Result::Err(GameError {
-                    message: format!("Player {} has already played in this square. Please select a different square.", filled),
-                })
-            },
-            None => {
+            Square::EMPTY => {
                 self.set_position(&position, player);
 
                 if self.check_if_player_won(player) {
@@ -36,7 +31,12 @@ impl Board {
                     Result::Ok(GameState::NoWinner)
                 } else {
                     Result::Ok(GameState::InProgress)
-                }
+                }                
+            },
+            current => {
+                Result::Err(GameError {
+                    message: format!("Player {} has already played in this square. Please select a different square.", current),
+                })
             }
         }
     }
@@ -47,25 +47,25 @@ impl Board {
             || self.check_diagonals(player)
     }
 
-    fn get_position(&self, position: &Position) -> Option<&Player> {
-        self.squares[(position.row as usize) - 1][(position.col as usize) - 1].as_ref()
+    fn get_position(&self, position: &Position) -> &Square {
+        &self.squares[(position.row as usize) - 1][(position.col as usize) - 1]
     }
 
     fn set_position(&mut self, position: &Position, player: &Player) {
         self.squares[(position.row as usize) - 1][(position.col as usize) - 1] =
-            Some(player.clone());
+            Square::from_player(player);
     }
 
     fn board_full(&self) -> bool {
         self.squares
             .iter()
-            .all(|row| row.iter().all(|square| square.is_some()))
+            .all(|row| row.iter().all(|square| square.is_filled()))
     }
 
     fn matches(&self, row: usize, col: usize, player: &Player) -> bool {
         match &self.squares[row][col] {
-            Some(p) => p == player,
-            None => false,
+            Square::EMPTY => false,
+            p => p.filled_by(player),
         }
     }
 
@@ -87,20 +87,13 @@ impl Board {
 
 impl Display for Board {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        fn format_player(player: &Option<Player>) -> String {
-            match player {
-                Some(p) => format!("{}", p),
-                None => String::from(" "),
-            }
-        }
-
         let mut output = String::from("=================");
         self.squares.iter().for_each(|row| {
             output.push_str(&format!(
                 "\n  {}  |  {}  |  {}  \n=================",
-                format_player(&row[0]),
-                format_player(&row[1]),
-                format_player(&row[2])
+                &row[0],
+                &row[1],
+                &row[2]
             ));
         });
         write!(f, "{output}")
