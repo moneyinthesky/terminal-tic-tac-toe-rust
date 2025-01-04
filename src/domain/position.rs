@@ -1,23 +1,20 @@
 use std::{fmt::Display, str::FromStr};
 
 #[derive(PartialEq, Debug)]
-pub struct Position {
-    pub row: i8,
-    pub col: i8,
-}
+pub struct Position(pub u8, pub u8);
 
 impl Position {
     fn from_str(s: &str) -> Result<Self, String> {
         let parts = s.split(",").collect::<Vec<_>>();
 
         if parts.len() == 2 {
-            let row_part: Result<i8, _> = parts[0].trim().parse();
-            let col_part: Result<i8, _> = parts[1].trim().parse();
+            let row_part: Result<u8, _> = parts[0].trim().parse();
+            let col_part: Result<u8, _> = parts[1].trim().parse();
 
             match (row_part, col_part) {
                 (Ok(row), Ok(col)) => {
                     if (1..=3).contains(&row) && (1..=3).contains(&col) {
-                        Ok(Position { row, col })
+                        Ok(Position(row, col))
                     } else {
                         Err(String::from(
                             "ROW and COL values should be numbers between 1 and 3",
@@ -36,7 +33,7 @@ impl Position {
 
 impl Display for Position {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{},{}", self.row, self.col)
+        write!(f, "{},{}", self.0, self.1)
     }
 }
 
@@ -56,7 +53,7 @@ mod tests {
     fn position_from_correctly_formatted_string() {
         assert_eq!(
             Position::from_str("1,2"),
-            Result::Ok(Position { row: 1, col: 2 })
+            Result::Ok(Position(1, 2))
         );
     }
 
@@ -64,7 +61,7 @@ mod tests {
     fn position_from_correctly_formatted_string_with_spaces() {
         assert_eq!(
             Position::from_str(" 3 , 2 "),
-            Result::Ok(Position { row: 3, col: 2 })
+            Result::Ok(Position(3, 2))
         );
     }
 

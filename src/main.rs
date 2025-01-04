@@ -27,7 +27,7 @@ fn get_next_move(player: &Player) -> Position {
 fn main() -> Result<(), Error> {
     let term = Term::stdout();
 
-    let mut board = Board::new();
+    let mut board = Board::default();
 
     println!("{}", style("Terminal tic-tac-toe!").bold().cyan());
     println!("{}", style("Select square in format \"ROW,COL\"").dim().italic());

@@ -2,20 +2,12 @@ use std::fmt::Display;
 
 use super::{player::Player, position::Position, square::Square, GameError, GameState};
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Default)]
 pub struct Board {
-    pub squares: Vec<Vec<Square>>,
+    pub squares: [[Square; 3]; 3],
 }
 
 impl Board {
-    pub fn new() -> Self {
-        Board {
-            squares: (0..3)
-                .map(|_| (0..3).map(|_| Square::default()).collect())
-                .collect(),
-        }
-    }
-
     pub fn play_move(
         &mut self,
         player: &Player,
@@ -42,17 +34,17 @@ impl Board {
     }
 
     pub fn check_if_player_won(&self, player: &Player) -> bool {
-        (0..3).any(|row_number| self.check_row(player, row_number))
-            || (0..3).any(|col_number| self.check_col(player, col_number))
+        (1..=3).any(|row_number| self.check_row(player, row_number))
+            || (1..=3).any(|col_number| self.check_col(player, col_number))
             || self.check_diagonals(player)
     }
 
     fn get_position(&self, position: &Position) -> &Square {
-        &self.squares[(position.row as usize) - 1][(position.col as usize) - 1]
+        &self.squares[(position.0 as usize) - 1][(position.1 as usize) - 1]
     }
 
     fn set_position(&mut self, position: &Position, player: &Player) {
-        self.squares[(position.row as usize) - 1][(position.col as usize) - 1] =
+        self.squares[(position.0 as usize) - 1][(position.1 as usize) - 1] =
             Square::from_player(player);
     }
 
@@ -62,26 +54,26 @@ impl Board {
             .all(|row| row.iter().all(|square| square.is_filled()))
     }
 
-    fn matches(&self, row: usize, col: usize, player: &Player) -> bool {
-        match &self.squares[row][col] {
+    fn matches(&self, position: &Position, player: &Player) -> bool {
+        match &self.get_position(position) {
             Square::EMPTY => false,
             p => p.filled_by(player),
         }
     }
 
-    fn check_col(&self, player: &Player, col_number: usize) -> bool {
-        (0..3).all(|row_number| self.matches(row_number, col_number, player))
+    fn check_col(&self, player: &Player, col_number: u8) -> bool {
+        (1..=3).all(|row_number| self.matches(&Position(row_number, col_number), player))
     }
 
-    fn check_row(&self, player: &Player, row_number: usize) -> bool {
-        (0..3).all(|col_number| self.matches(row_number, col_number, player))
+    fn check_row(&self, player: &Player, row_number: u8) -> bool {
+        (1..=3).all(|col_number| self.matches(&Position(row_number, col_number), player))
     }
 
     fn check_diagonals(&self, player: &Player) -> bool {
-        (self.matches(0, 0, player) && self.matches(1, 1, player) && self.matches(2, 2, player))
-            || (self.matches(2, 0, player)
-                && self.matches(1, 1, player)
-                && self.matches(0, 2, player))
+        (self.matches(&Position(1, 1), player) && self.matches(&Position(2, 2), player) && self.matches(&Position(3, 3), player))
+            || (self.matches(&Position(3, 1), player)
+                && self.matches(&Position(2, 2), player)
+                && self.matches(&Position(1, 3), player))
     }
 }
 
@@ -106,11 +98,11 @@ mod tests {
 
     #[test]
     fn play_move_on_empty_board() {
-        let position = Position { row: 2, col: 2 };
-        let mut expected_board = Board::new();
+        let position = Position(2, 2);
+        let mut expected_board = Board::default();
         expected_board.set_position(&position, &Player::X);
 
-        let mut board = Board::new();
+        let mut board = Board::default();
         let result = board.play_move(&Player::X, position);
 
         assert_eq!(result, Result::Ok(GameState::InProgress));
@@ -119,9 +111,9 @@ mod tests {
 
     #[test]
     fn play_move_on_occupied_square() {
-        let position = Position { row: 2, col: 2 };
+        let position = Position(2, 2);
 
-        let mut board = Board::new();
+        let mut board = Board::default();
         board.set_position(&position, &Player::O);
         let result = board.play_move(&Player::X, position);
 
@@ -139,13 +131,10 @@ mod tests {
     #[test]
     fn check_if_player_won_on_row() {
         for row_number in 1..=3 {
-            let mut board = Board::new();
+            let mut board = Board::default();
             (1..=3).for_each(|col_number| {
                 board.set_position(
-                    &Position {
-                        row: row_number,
-                        col: col_number,
-                    },
+                    &Position(row_number, col_number),
                     &Player::O,
                 )
             });
@@ -157,13 +146,10 @@ mod tests {
     #[test]
     fn check_if_player_won_on_col() {
         for col_number in 1..=3 {
-            let mut board = Board::new();
+            let mut board = Board::default();
             (1..=3).for_each(|row_number| {
                 board.set_position(
-                    &Position {
-                        row: row_number,
-                        col: col_number,
-                    },
+                    &Position(row_number, col_number),
                     &Player::O,
                 )
             });
@@ -174,27 +160,27 @@ mod tests {
 
     #[test]
     fn check_if_player_won_on_diagonal() {
-        let mut board = Board::new();
-        board.set_position(&Position { row: 1, col: 1 }, &Player::O);
-        board.set_position(&Position { row: 2, col: 2 }, &Player::O);
-        board.set_position(&Position { row: 3, col: 3 }, &Player::O);
+        let mut board = Board::default();
+        board.set_position(&Position(1, 1), &Player::O);
+        board.set_position(&Position(2, 2), &Player::O);
+        board.set_position(&Position(3, 3), &Player::O);
 
         assert!(board.check_if_player_won(&Player::O));
 
-        board = Board::new();
-        board.set_position(&Position { row: 1, col: 3 }, &Player::O);
-        board.set_position(&Position { row: 2, col: 2 }, &Player::O);
-        board.set_position(&Position { row: 3, col: 1 }, &Player::O);
+        board = Board::default();
+        board.set_position(&Position(1, 3), &Player::O);
+        board.set_position(&Position(2, 2), &Player::O);
+        board.set_position(&Position(3, 1), &Player::O);
 
         assert!(board.check_if_player_won(&Player::O));
     }
 
     #[test]
     fn check_if_player_won_on_in_progress_board() {
-        let mut board = Board::new();
-        board.set_position(&Position { row: 1, col: 1 }, &Player::O);
-        board.set_position(&Position { row: 2, col: 2 }, &Player::O);
-        board.set_position(&Position { row: 3, col: 2 }, &Player::O);
+        let mut board = Board::default();
+        board.set_position(&Position(1, 1), &Player::O);
+        board.set_position(&Position(2, 2), &Player::O);
+        board.set_position(&Position(3, 2), &Player::O);
 
         assert!(!board.check_if_player_won(&Player::O));
     }
